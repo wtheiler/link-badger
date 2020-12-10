@@ -4,6 +4,7 @@ const {
   getAllLinks,
   createLink,
   createTag,
+  createComment,
   deleteLink
   // other db methods 
 } = require('./index');
@@ -20,6 +21,7 @@ async function buildTables() {
       console.log('Starting to drop tables...');
 
       client.query(`
+        DROP TABLE IF EXISTS comments;
         DROP TABLE IF EXISTS tags;
         DROP TABLE IF EXISTS links;
       `);
@@ -53,8 +55,14 @@ async function buildTables() {
       CREATE TABLE tags(
         id SERIAL PRIMARY KEY,
         "linksId" INTEGER REFERENCES links(id),
-        content TEXT NOT NULL
-      )
+        tag TEXT NOT NULL
+      );
+
+      CREATE TABLE comments(
+        id SERIAL PRIMARY KEY,
+        "linksId" INTEGER REFERENCES links(id),
+        comment TEXT NOT NULL
+      );
     `);
 
     console.log('Finished constructing tables!');
@@ -83,8 +91,8 @@ async function populateInitialData() {
       description: "looking for or dreaming about your next abode? - check this site out!"
     })
     console.log("success creating links!")
-    console.log("linkOne is:", linkOne)
-    console.log("linkTwo is:", linkTwo)
+    // console.log("linkOne is:", linkOne)
+    // console.log("linkTwo is:", linkTwo)
     return [linkOne, linkTwo]
   } catch (error) {
     throw error;
@@ -92,42 +100,98 @@ async function populateInitialData() {
 
 }
 
-async function populateInitialTagsData(initialLinks) {
+async function populateInitialTagsData(initialLinkTags) {
 
-  const [linkOne, linkTwo] = initialLinks
+  const [linkOne, linkTwo] = initialLinkTags
 
   try {
     console.log("creating tags initial data...")
+    console.log("Here is linkOne.id from Tags:", linkOne)
 
     const tagOne = await createTag(
-      linkOne.id, {
-      content: "search"
-    }
+      linkOne.id,
+      "search"
+
     )
 
     const tagTwo = await createTag(
-      linkOne.id, {
-      content: "big brother"
-    }
+      linkOne.id,
+      "big brother"
+
     )
 
     const tagThree = await createTag(
-      linkTwo.id, {
-      content: "educational"
-    }
+      linkTwo.id,
+      "educational"
+
+    )
+
+    const commentOne = await createComment(
+      linkOne.id,
+      "I really, really like this site - but what a weird name!"
+
+    )
+
+    const commentTwo = await createComment(
+      linkOne.id,
+      "This website is most useful!"
+
+    )
+
+    const commentThree = await createComment(
+      linkTwo.id,
+      "Still my go-to for looking for homes!"
+
     )
 
     console.log("success creating tags!")
-    console.log("tagOne is:", tagOne)
-    console.log("tagTwo is:", tagTwo)
-    console.log("tagThree is:", tagThree)
-    return [tagOne, tagTwo, tagThree]
+    console.log("commentOne at end of tags:", commentOne)
+
+
+    return [tagOne, tagTwo, tagThree, commentOne, commentTwo, commentThree]
 
   } catch (error) {
     throw error
   }
 }
 
+
+// async function populateInitialComments(initialLinkComments) {
+//   console.log("initialLinkComments:", initialLinkComments)
+
+//   const [linkOne, linkTwo] = initialLinkComments
+
+//   try {
+//     console.log("creating comments initial data...")
+//     console.log("here is linkOne.id:", linkOne.id)
+
+//     const commentOne = await createComment(
+//       linkOne.id,
+//       "I really, really like this site - but what a weird name!"
+
+//     )
+
+//     const commentTwo = await createComment(
+//       linkOne.id,
+//       "This website is most useful!"
+
+//     )
+
+//     const commentThree = await createComment(
+//       linkTwo.id,
+//       "Still my go-to for looking for homes!"
+
+//     )
+
+//     console.log("success creating comments!")
+
+//     console.log(commentOne)
+//     return [commentOne, commentTwo, commentThree]
+
+//   } catch (error) {
+//     throw error
+//   }
+// }
 
 
 

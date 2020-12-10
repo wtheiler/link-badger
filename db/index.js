@@ -12,11 +12,65 @@ async function getAllLinks() {
   try {
     const { rows: links } = await client.query(`
         SELECT * 
-        FROM links l;
-    
-    
+        FROM links ;
+
     `)
-    console.log("all links for getAllLinks:", links)
+    // console.log("all links for getAllLinks:", links)
+
+    const linkIds = links.map((link) => {
+
+      return link.id
+    })
+    // console.log(linkIds)
+    const selectValues = linkIds.map((_, index) => `$${index + 1}`).join(', ');
+    // console.log(selectValues)
+
+
+
+
+
+    const { rows: tags } = await client.query(
+      `
+      SELECT *
+      FROM tags
+      WHERE "linksId" in (${selectValues});
+      `, linkIds
+    )
+
+    // console.log("tags returend from db:", tags)
+    const { rows: comments } = await client.query(
+      `
+      SELECT *
+      FROM comments
+      WHERE "linksId" in (${selectValues});
+      `, linkIds
+    )
+    console.log("comments from db:", comments)
+
+
+    links.map((link) => {
+      link.tags = []
+      link.comments = []
+
+      tags.forEach((tag) => {
+        tag.linksId === link.id ? link.tags.push(tag.tag) : undefined
+      })
+      comments.forEach((comment) => {
+        comment.linksId === link.id ? link.comments.push(comment.comment) : undefined
+      })
+
+
+
+
+
+      return link
+    })
+
+
+
+
+
+    console.log("should be my links object with associated tags & comments:", links)
     return links
 
   } catch (error) {
@@ -59,17 +113,36 @@ async function createLink({ name, url, description }) {
 
 
 // I need a function to insert a new Tag into the Tags (& LinkTags) table?
-async function createTag(linksId, content) {
-  console.log("link.id passed in from dbtest:", linksId)
+async function createTag(linksId, tag) {
+  // console.log("link.id passed in from dbtest:", linksId)
   try {
     const { rows: newTag } = await client.query(`
     INSERT
-    INTO tags("linksId", content)
+    INTO tags("linksId", tag)
     VALUES($1, $2)
     RETURNING*;
     
-    `, [linksId, content])
+    `, [linksId, tag])
+    // console.log("what is my tag from query:", newTag)
     return newTag
+  } catch (error) {
+    throw (error)
+  }
+}
+
+
+async function createComment(linksId, comment) {
+  // console.log("link.id passed in from dbtest:", linksId)
+  try {
+    const { rows: newComment } = await client.query(`
+    INSERT
+    INTO comments("linksId", comment)
+    VALUES($1, $2)
+    RETURNING*;
+    
+    `, [linksId, comment])
+    // console.log("what is my tag from query:", newTag)
+    return newComment
   } catch (error) {
     throw (error)
   }
@@ -112,6 +185,7 @@ module.exports = {
   getAllLinks,
   createLink,
   createTag,
+  createComment,
   deleteLink
   // db methods
 }
