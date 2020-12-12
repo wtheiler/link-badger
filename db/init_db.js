@@ -48,7 +48,8 @@ async function buildTables() {
         url varchar(255) NOT NULL,
         description TEXT NOT NULL,
         "clickCount" INTEGER NOT NULL DEFAULT 0,
-        "createDate" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+        "createDate" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        deleted BOOLEAN DEFAULT false
       );
 
       CREATE TABLE tags(

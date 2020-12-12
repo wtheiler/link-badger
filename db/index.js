@@ -85,7 +85,7 @@ async function createLink({ name, url, description }) {
 async function createTag(linksId, tag) {
 
   try {
-    const { rows: newTag } = await client.query(`
+    const { rows: [newTag] } = await client.query(`
     INSERT
     INTO tags("linksId", tag)
     VALUES($1, $2)
@@ -105,7 +105,7 @@ async function createTag(linksId, tag) {
 async function createComment(linksId, comment) {
 
   try {
-    const { rows: newComment } = await client.query(`
+    const { rows: [newComment] } = await client.query(`
     INSERT
     INTO comments("linksId", comment)
     VALUES($1, $2)
@@ -143,14 +143,13 @@ async function _getLink(linkId) {
 // Let's start with the ability to DELETE an entire LINK - if we can we can do a POST to edit (for both Links & Tags) as a stretch goal
 
 // deleteLink will remove a link from the database table based on linkId
-async function deleteLink({ linkId }) {
+async function deleteLink(linkId) {
 
   try {
     const { rows: link } = await client.query(`
-    DELETE 
-    FROM links
-    WHERE id=${linkId}
-    RETURNING *;
+    UPDATE links
+    SET deleted = true
+    WHERE id=${linkId};
     `)
 
     return link
