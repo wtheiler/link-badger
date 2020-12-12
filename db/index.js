@@ -148,7 +148,7 @@ async function deleteLink(linkId) {
   try {
     const { rows: link } = await client.query(`
     UPDATE links
-    SET deleted = true
+    SET "isActive" = false
     WHERE id=${linkId};
     `)
 

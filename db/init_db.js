@@ -49,7 +49,7 @@ async function buildTables() {
         description TEXT NOT NULL,
         "clickCount" INTEGER NOT NULL DEFAULT 0,
         "createDate" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-        deleted BOOLEAN DEFAULT false
+        "isActive" BOOLEAN DEFAULT true
       );
 
       CREATE TABLE tags(
