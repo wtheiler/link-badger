@@ -13,6 +13,7 @@ const {
 
 async function buildTables() {
   try {
+
     client.connect();
 
     console.log('Starting to drop tables...');
