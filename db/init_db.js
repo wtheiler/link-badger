@@ -15,30 +15,16 @@ async function buildTables() {
   try {
     client.connect();
 
-    try {
-      console.log('Starting to drop tables...');
+    console.log('Starting to drop tables...');
 
-      client.query(`
+    await client.query(`
         DROP TABLE IF EXISTS tag_link;
         DROP TABLE IF EXISTS tags;
         DROP TABLE IF EXISTS links;
       `);
 
-      console.log('Finished dropping tables!');
-    } catch (error) {
+    console.log('Finished dropping tables!');
 
-      console.error('Error while dropping tables!');
-
-      throw error;
-    }
-
-    // build tables in correct order
-
-  } catch (error) {
-    throw error;
-  }
-
-  try {
     console.log('Starting to construct tables...');
 
     await client.query(`
@@ -67,6 +53,8 @@ async function buildTables() {
     `);
 
     console.log('Finished constructing tables!');
+
+
   } catch (error) {
     console.error('Error constructing tables!');
 
