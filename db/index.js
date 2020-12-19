@@ -12,49 +12,29 @@ async function getAllLinks() {
   try {
     const { rows: links } = await client.query(`
         SELECT * 
-        FROM links ;
+        FROM links
+        WHERE "isActive" = true
+        ORDER BY "createDate" ASC ;
     `)
 
-    // Let's get the ids for all links so that we can add in appropriate comments & tags:
-    const linkIds = links.map((link) => {
-      return link.id
-    })
 
-    const selectValues = linkIds.map((_, index) => `$${index + 1}`).join(', ');
+    const { rows: tags } = await client.query(`
+    SELECT *
+    FROM tags
+    NATURAL JOIN tag_link
+    ;
+    `)
 
-    // First, let's grab the tags associated with the links:
-    const { rows: tags } = await client.query(
-      `
-      SELECT *
-      FROM tags
-      WHERE "linksId" in (${selectValues});
-      `, linkIds
-    )
-
-    // Second, let's grab the comments associated with the links:
-    const { rows: comments } = await client.query(
-      `
-      SELECT *
-      FROM comments
-      WHERE "linksId" in (${selectValues});
-      `, linkIds
-    )
-
-    // Finally, let's add them to our links object and return to the request
     links.map((link) => {
       link.tags = []
-      link.comments = []
-
-      tags.forEach((tag) => {
-        tag.linksId === link.id ? link.tags.push(tag.tag) : undefined
-      })
-      comments.forEach((comment) => {
-        comment.linksId === link.id ? link.comments.push(comment.comment) : undefined
+      tags.map((tag) => {
+        if (tag.link_id === link.link_id) {
+          link.tags.push(" " + tag.tag)
+        }
       })
       return link
     })
 
-    console.log("should be my links object with associated tags & comments:", links)
     return links
 
   } catch (error) {
@@ -62,10 +42,27 @@ async function getAllLinks() {
   }
 }
 
-// createLink will insert a new link into the database and return it.
-async function createLink({ name, url, description }) {
 
+
+async function getAllTags() {
   try {
+    const { rows: tags } = await client.query(`
+        SELECT * 
+        FROM tags;
+    `)
+    console.log("tags from get all tags in db:", tags)
+    return tags
+  } catch (error) {
+    return error
+  }
+}
+
+
+// createLink will insert a new link into the database and return it.
+
+async function createLink({ name, url, description, tags = [] }) {
+  try {
+
     const { rows: [link] } = await client.query(`
     INSERT 
     INTO links(name, url, description)
@@ -73,52 +70,57 @@ async function createLink({ name, url, description }) {
     RETURNING *;
   `, [name, url, description])
 
-    return link
+    console.log("here is my new link in the db", link)
+
+    // return getAllLinks()
+
+    let insertValues = tags.map(
+      (_, index) => `$${index + 1}`).join('), (');
+    const { rows: tag } = await client.query(`
+    INSERT 
+    INTO tags(tag)
+    VALUES(${insertValues})
+    ON CONFLICT (tag)
+    DO UPDATE SET tag=tags.tag
+    RETURNING *;
+  `, tags)
+
+    console.log("here is my new tag in the db:", tag)
+
+    insertValues = tag.map(
+      (_, index) => `$1, $${index + 2}`).join(`), (`)
+    console.log([link.link_id, ...tag.map((tag) => tag.tag_id)])
+    await client.query(`
+    INSERT
+    INTO tag_link(link_id, tag_id)
+    VALUES(${insertValues});
+    `, [link.link_id, ...tag.map((tag) => tag.tag_id)])   // map over tags array and grab the ids, then spread them out over the existing array to then insert into the variables for insertValues
 
   } catch (error) {
     throw error
   }
 
+  return getAllLinks()
 }
 
-// createTag adds a new tag to the tags table with appropriate linkId and returns it
-async function createTag(linksId, tag) {
+
+
+async function createTag({ tag }) {
+  console.log("the new tag in db", tag)
 
   try {
-    const { rows: [newTag] } = await client.query(`
+    const { rows: newtag } = await client.query(`
     INSERT
-    INTO tags("linksId", tag)
-    VALUES($1, $2)
-    RETURNING*;
-    
-    `, [linksId, tag])
-
-    return newTag
-
+    INTO tags(tag)
+    VALUES('${tag}');
+    `)
+    console.log("tag in the db:", newtag)
   } catch (error) {
-    throw (error)
+    throw error
   }
+  return getAllTags()
 }
 
-
-// createComment creates a new comment on the comments table with appropriate linkId and returns it
-async function createComment(linksId, comment) {
-
-  try {
-    const { rows: [newComment] } = await client.query(`
-    INSERT
-    INTO comments("linksId", comment)
-    VALUES($1, $2)
-    RETURNING*;
-    
-    `, [linksId, comment])
-
-    return newComment
-
-  } catch (error) {
-    throw (error)
-  }
-}
 
 
 // Let's add a get link function to reuse as needed
@@ -127,7 +129,7 @@ async function _getLink(linkId) {
     const { rows: [link] } = await client.query(`
     SELECT *
     FROM links
-    WHERE id=${linkId};
+    WHERE link_id=${linkId};
     `)
 
     return link
@@ -146,16 +148,19 @@ async function _getLink(linkId) {
 async function deleteLink(linkId) {
 
   try {
-    const { rows: link } = await client.query(`
+    await client.query(`
     UPDATE links
     SET "isActive" = false
-    WHERE id=${linkId};
+    WHERE link_id=${linkId}
+    ;
+    
     `)
-
-    return link
+    return getAllLinks()
+    // return link/
 
   }
   catch (error) {
+
     throw error
   }
 }
@@ -165,23 +170,18 @@ async function deleteLink(linkId) {
 // updateLinkCount will run when a user clicks on the link even and then will grab the current link, add "1" to the currentCount on the link table, update the table and return the link object with the new count
 async function updateLinkCount(linkId) {
 
-  try {
-    const link = await _getLink(linkId)
-    if (!link) {
-
-      throw "This link does not exist"
-    }
-  } catch (error) {
-    throw error
-  }
+  console.log("update Link Count in db/index:", linkId)
 
   try {
     const { rows: [link] } = await client.query(`
       SELECT *
       from links
-      WHERE id=${linkId};
+      WHERE link_id=${linkId}
+      ;
     
     `)
+
+    console.log("index.db", link)
 
     const currentCount = link.clickCount
     // console.log(link)
@@ -193,13 +193,15 @@ async function updateLinkCount(linkId) {
     await client.query(`
     UPDATE links
     SET "clickCount" = ${newCount}
-    WHERE id = ${linkId};
+    WHERE link_id = ${linkId}
+    ;
     `)
 
-    const newLink = await _getLink(linkId)
+    // const newLink = await _getLink(linkId)
 
     // console.log("here is my new link with updated click count:", newLink)
-    return newLink
+
+    return getAllLinks()
 
   } catch (error) {
     throw error
@@ -211,9 +213,9 @@ async function updateLinkCount(linkId) {
 module.exports = {
   client,
   getAllLinks,
+  getAllTags,
   createLink,
   createTag,
-  createComment,
   updateLinkCount,
   deleteLink
   // db methods

@@ -1,34 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import 'fontsource-roboto';
-// import Button from '@material-ui/core/Button';
-
-import {
-  getSomething
-} from '../api';
-
-// const App = () => {
-//   const [message, setMessage] = useState('');
-
-//   useEffect(() => {
-//     getSomething()
-//       .then(response => {
-//         setMessage(response.message);
-//       })
-//       .catch(error => {
-//         setMessage(error.message);
-//       });
-//   });
-
-//   return (
-//     <div className="App">
-//       <h1>Hello, World!</h1>
-//       <h2>{message}</h2>
-//       <Button variant="contained" color="primary">
-//         This thing on?
-//       </Button>
-//     </div>
-//   );
-// }
+import MultipleSelect from './Tags'
+import SimpleDialogDemo from './AddTag'
+import SearchCards from './Search'
 
 import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
@@ -45,6 +19,19 @@ import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import Link from '@material-ui/core/Link';
 import TextField from '@material-ui/core/TextField';
+import IconButton from '@material-ui/core/IconButton';
+import DeleteIcon from '@material-ui/icons/Delete';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+
+
+import {
+  getLinks, getTags, createNewLink, createNewTag, deleteSingleLink, clickCount
+} from '../api';
+
 
 
 function Copyright() {
@@ -52,7 +39,7 @@ function Copyright() {
     <Typography variant="body2" color="textSecondary" align="center">
       {'Copyright © '}
       <Link color="inherit" href="https://material-ui.com/">
-        Your Website
+        will theiler
       </Link>{' '}
       {new Date().getFullYear()}
       {'.'}
@@ -70,6 +57,7 @@ const useStyles = makeStyles((theme) => ({
   },
   heroButtons: {
     marginTop: theme.spacing(8),
+
 
   },
   cardGrid: {
@@ -90,59 +78,130 @@ const useStyles = makeStyles((theme) => ({
   footer: {
     backgroundColor: theme.palette.background.paper,
     padding: theme.spacing(6),
-  },
+  }
+
 }));
 
-const cards = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export default function Album() {
   const classes = useStyles();
   const [theLinkName, setTheLinkName] = useState("")
   const [theUrl, setTheUrl] = useState("")
   const [theDescription, setTheDescription] = useState("")
-  const [theTags, setTheTags] = useState("")
+  const [allTags, setAllTags] = useState([])
+  const [cards, setLinks] = useState([])
+  const [selectedTagNames, setSelectedTagNames] = useState([]);
+  const [newTag, setNewTag] = useState([])
+  const [sortLinks, setSortLinks] = useState("Created Date")
+
+  // add state for which sort mechanism it is - if sort by created date, then update "cards" using cards.sort(), then setLinks to that new order... 
+  // for date formatting:
+  const DATE_OPTIONS = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+
+
+  useEffect(() => {
+    getLinks().then((response) => {
+      console.log("links from useEffect", response)
+      setLinks(response);
+    })
+
+  }, []);
+
+  useEffect(() => {
+    getTags().then((response) => {
+      console.log("tags from useEffect", response)
+      setAllTags(response);
+
+    });
+  }, []);
+
+
 
   const handleTheLinkName = (event) => {
     event.preventDefault()
     const theLink = event.target.value
-    // console.log("the link name:", theLink)
     setTheLinkName(theLink)
   }
 
   const handleTheUrl = (event) => {
     event.preventDefault()
     const newUrl = event.target.value
-    // console.log("the Url:", newUrl)
     setTheUrl(newUrl)
   }
 
   const handleTheDescription = (event) => {
     event.preventDefault()
     const newDescription = event.target.value
-    // console.log("the Description:", newDescription)
     setTheDescription(newDescription)
   }
 
-  const handleTheTags = (event) => {
+  // NEED TO BUILD THIS GUY
+  const handleSelectedTags = (event) => {
     event.preventDefault()
     const newTags = event.target.value
-    // console.log("the Tags:", newTags)
-    setTheTags(newTags)
+    console.log("the selected tags:", newTags)
   }
 
 
-  const buildLinkObject = (event) => {
+
+
+  const buildLinkObject = async (event) => {
     event.preventDefault()
     const newLink = {
       name: theLinkName,
       url: theUrl,
       description: theDescription,
-      tags: theTags
+      tags: selectedTagNames
     }
-    console.log("the new link object:", newLink)
+
+    const theLinks = await createNewLink(newLink)
+    setLinks(theLinks)
+
+  }
+
+  const handleClickCount = async (card) => {
+
+    const cardId = { id: card.link_id }
+    console.log("click count cardId:", cardId)
+    const clickCountLinks = await clickCount(cardId)
+    setLinks(clickCountLinks)
+
+  }
+
+  const deleteCard = async (card) => {
+
+    console.log("card grabbed upon delete click:", card)
+    const cardId = { id: card.link_id }
+    const theLinks = await deleteSingleLink(cardId)
+    setLinks(theLinks)
+  };
 
 
-    // event.target.reset()
+
+
+
+  const handleSort = (event) => {
+    // console.log(event.target.value)
+    const sortBy = event.target.value
+    setSortLinks(sortBy)
+  }
+
+  if (sortLinks === "Popularity") {
+    console.log("SORT LINKS BY CLICK COUNT", sortLinks)
+    // cards.sort((a, b) => a.clickCount - b.clickCount);
+    cards.sort((a, b) => (a.clickCount < b.clickCount ? 1 : -1))
+    console.log(cards)
+
+
+
+  } else if (sortLinks === "Created Date") {
+    console.log("SORT LINKS BY CREATED DATE", sortLinks)
+    cards.sort((a, b) => (a.link_id - b.link_id))
+    console.log("cards after create date sort:", cards)
+
+  } else if (sortLinks === "Name") {
+    console.log("SORT LINKS BY NAME", sortLinks)
+    cards.sort((a, b) => (a.name > b.name ? 1 : -1))
   }
 
 
@@ -184,11 +243,22 @@ export default function Album() {
                     <TextField id="standard-basic" label="a description" onChange={handleTheDescription} />
                   </form>
                 </Grid>
+
                 <Grid item>
-                  <form className={classes.root} noValidate autoComplete="off">
-                    <TextField id="standard-basic" label="add tag(s)" onChange={handleTheTags} />
-                  </form>
+                  <MultipleSelect className={classes.root} allTags={allTags} setSelectedTagNames={setSelectedTagNames} selectedTagNames={selectedTagNames} onChange={handleSelectedTags} />
                 </Grid>
+
+
+
+                <Grid item>
+                  <SimpleDialogDemo className={classes.root} allTags={allTags} newTag={newTag} setNewTag={setNewTag} setAllTags={setAllTags} createNewTag={createNewTag} />
+                </Grid>
+
+
+
+
+
+
                 <Grid item>
                   <Button variant="contained" color="primary" onClick={buildLinkObject}>
                     Add
@@ -199,35 +269,92 @@ export default function Album() {
 
           </Container>
         </div>
+        <Grid>
+          <Container className={classes.root} maxWidth="md">
+            {/* End hero unit */}
+            <FormControl className={classes.formControl} style={{ width: "180px", margin: "20px" }}>
+              <InputLabel id="demo-simple-select-helper-label">Sort by</InputLabel>
+              <Select
+                labelId="demo-simple-select-helper-label"
+                id="demo-simple-select-helper"
+                value={sortLinks}
+                onChange={handleSort}
+              >
+
+                <MenuItem value={"Created Date"}>Created Date</MenuItem>
+                <MenuItem value={"Popularity"}>Popularity</MenuItem>
+                <MenuItem value={"Name"}>Name</MenuItem>
+              </Select>
+
+            </FormControl>
+
+
+            <SearchCards cards={cards} setAllLinks={setLinks} /><br />
+          </Container>
+        </Grid>
+
+
+
+
+
+
         <Container className={classes.cardGrid} maxWidth="md">
-          {/* End hero unit */}
+
+
           <Grid container spacing={4}>
+
+
+
+
+
+
+
+
+
             {cards.map((card) => (
-              <Grid item key={card} xs={12} sm={6} md={4}>
+
+              < Grid item key={card.id} xs={12} sm={6} md={4} >
+
                 <Card className={classes.card}>
-                  <CardMedia
+                  {/* <CardMedia
                     className={classes.cardMedia}
-                    // image="https://source.unsplash.com/random"
+                    //  image="https://source.unsplash.com/random"
+
                     title="Image title"
-                  />
+                  /> */}
                   <CardContent className={classes.cardContent}>
                     <Typography gutterBottom variant="h5" component="h2">
-                      Link Name
+                      <Link rel="canonical" href={`//${card.url}`} onClick={() => { handleClickCount(card) }} target="_blank">
+                        {card.name}
+                      </Link>
+
                     </Typography>
+
                     <Typography>
-                      Link Description and/or Comment(s)
+                      {card.description}
                     </Typography>
+
+                    <Typography>
+                      Tags: {`${card.tags}`}
+                    </Typography>
+
+
                   </CardContent>
                   <CardActions>
-                    <Button size="small" color="primary">
-                      Add Comment
-                    </Button>
-                    <Button size="small" color="primary">
-                      Add Tag
-                    </Button>
+                    <Typography>
+                      {card.clickCount} click(s) since {(new Date(card.createDate)).toLocaleDateString('en-US', DATE_OPTIONS)}
+                    </Typography>
+                    <IconButton aria-label="delete" className={classes.margin} onClick={() => {
+                      deleteCard(card);
+                    }}>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
                   </CardActions>
                 </Card>
+
+
               </Grid>
+
             ))}
           </Grid>
         </Container>
@@ -238,12 +365,12 @@ export default function Album() {
           Footer
         </Typography>
         <Typography variant="subtitle1" align="center" color="textSecondary" component="p">
-          Something here to give the footer a purpose!
+          Thanks for checking out the Link badger - have a wonderful day.
         </Typography>
         <Copyright />
       </footer>
       {/* End footer */}
-    </React.Fragment>
+    </React.Fragment >
   );
 }
 

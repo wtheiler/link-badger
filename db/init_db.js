@@ -19,7 +19,7 @@ async function buildTables() {
       console.log('Starting to drop tables...');
 
       client.query(`
-        DROP TABLE IF EXISTS comments;
+        DROP TABLE IF EXISTS tag_link;
         DROP TABLE IF EXISTS tags;
         DROP TABLE IF EXISTS links;
       `);
@@ -43,7 +43,7 @@ async function buildTables() {
 
     await client.query(`
       CREATE TABLE links(
-        id SERIAL PRIMARY KEY,
+        link_id SERIAL PRIMARY KEY,
         name varchar(255) NOT NULL,
         url varchar(255) NOT NULL,
         description TEXT NOT NULL,
@@ -53,16 +53,17 @@ async function buildTables() {
       );
 
       CREATE TABLE tags(
-        id SERIAL PRIMARY KEY,
-        "linksId" INTEGER REFERENCES links(id),
-        tag TEXT NOT NULL
+        tag_id SERIAL PRIMARY KEY,
+        tag TEXT UNIQUE NOT NULL
       );
 
-      CREATE TABLE comments(
-        id SERIAL PRIMARY KEY,
-        "linksId" INTEGER REFERENCES links(id),
-        comment TEXT NOT NULL
+      CREATE TABLE tag_link(
+        link_id INTEGER REFERENCES links(link_id) NOT NULL,
+        tag_id INTEGER REFERENCES tags(tag_id) NOT NULL, 
+        UNIQUE (link_id, tag_id)
       );
+
+
     `);
 
     console.log('Finished constructing tables!');
@@ -82,44 +83,41 @@ async function populateInitialData() {
     const linkOne = await createLink({
       name: "FaveLink",
       url: "www.google.com",
-      description: "This is by far my favorite Link on the internet."
+      description: "This is by far my favorite Link on the internet.",
+      tags: ["tag one", "general", "music"]
     })
 
-    const linkTwo = await createLink({
-      name: "SecondFaveLink",
-      url: "www.zillow.com",
-      description: "looking for or dreaming about your next abode? - check this site out!"
-    })
+    // const linkTwo = await createLink({
+    //   name: "SecondFaveLink",
+    //   url: "www.zillow.com",
+    //   description: "looking for or dreaming about your next abode? - check this site out!",
+    //   tags: "tagyouareit"
+    // })
     console.log("success creating links!")
 
-    return [linkOne, linkTwo]
+    return [linkOne]
   } catch (error) {
     throw error;
   }
 
 }
 
-async function populateInitialTagsData(initialLinkTags) {
-  const [linkOne, linkTwo] = initialLinkTags
+async function populateInitialTagsData(/*initialLinkTags*/) {
+  // const [linkOne] = initialLinkTags
 
   try {
-    console.log("creating tags initial data...")
-    const tagOne = await createTag(linkOne.id, "search")
-    const tagTwo = await createTag(linkOne.id, "big brother")
-    const tagThree = await createTag(linkTwo.id, "educational")
-    console.log("success creating tags!")
+    // console.log("creating tags initial data...")
+    // const tagOne = await createTag("search")
+    // const tagTwo = await createTag("big brother")
 
-    console.log("creating comments initial data...")
-    const commentOne = await createComment(linkOne.id, "I really, really like this site - but what a weird name!")
-    const commentTwo = await createComment(linkOne.id, "This website is most useful!")
-    const commentThree = await createComment(linkTwo.id, "Still my go-to for looking for homes!")
-    console.log("success creating comments!")
+    // console.log("success creating tags!")
+
 
     console.log("testing click count function...")
     const clickCount = await updateLinkCount(1)
     console.log("success testing click count function!")
 
-    return [tagOne, tagTwo, tagThree, commentOne, commentTwo, commentThree, clickCount]
+    return [clickCount]
 
   } catch (error) {
     throw error
