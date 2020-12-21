@@ -24,12 +24,17 @@ export default function SearchCards({ cards, setLinks }) {
 
 
 
-    console.log("searchString", searchString)
+    // console.log("searchString", searchString)
+
+
 
     const handleSearch = (event) => {
         const searchText = event.target.value
         setSearchString(searchText)
     }
+
+
+    const
 
     return (
         <div>

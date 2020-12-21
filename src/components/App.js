@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import 'fontsource-roboto';
 import MultipleSelect from './Tags'
 import SimpleDialogDemo from './AddTag'
-import SearchCards from './Search'
+// import SearchCards from './Search'
 
 import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
@@ -289,7 +289,7 @@ export default function Album() {
             </FormControl>
 
 
-            <SearchCards cards={cards} setAllLinks={setLinks} /><br />
+            {/* <SearchCards cards={cards} setAllLinks={setLinks} /><br /> */}
           </Container>
         </Grid>
 
