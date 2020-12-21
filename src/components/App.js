@@ -362,7 +362,7 @@ export default function Album() {
       </main>
 
 
-      <Footer copyright={Copyright} />
+      <Footer copyright={Copyright} classes={classes} />
 
     </React.Fragment >
   );
