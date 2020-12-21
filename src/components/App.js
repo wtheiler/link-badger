@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import 'fontsource-roboto';
 import MultipleSelect from './Tags'
 import SimpleDialogDemo from './AddTag'
+import Footer from './Footer'
 // import SearchCards from './Search'
 
 import AppBar from '@material-ui/core/AppBar';
@@ -359,17 +360,10 @@ export default function Album() {
           </Grid>
         </Container>
       </main>
-      {/* Footer */}
-      <footer className={classes.footer}>
-        <Typography variant="h6" align="center" gutterBottom>
-          Footer
-        </Typography>
-        <Typography variant="subtitle1" align="center" color="textSecondary" component="p">
-          Thanks for checking out the Link badger - have a wonderful day.
-        </Typography>
-        <Copyright />
-      </footer>
-      {/* End footer */}
+
+
+      <Footer copyright={Copyright} />
+
     </React.Fragment >
   );
 }
