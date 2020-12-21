@@ -70,21 +70,29 @@ async function populateInitialData() {
     console.log("Creating test links data...")
 
     const linkOne = await createLink({
-      name: "FaveLink",
+      name: "Google",
       url: "www.google.com",
       description: "This is by far my favorite Link on the internet.",
-      tags: ["tag one", "general", "music"]
+      tags: ["search"]
     })
 
-    // const linkTwo = await createLink({
-    //   name: "SecondFaveLink",
-    //   url: "www.zillow.com",
-    //   description: "looking for or dreaming about your next abode? - check this site out!",
-    //   tags: "tagyouareit"
-    // })
+    const linkTwo = await createLink({
+      name: "Zillow",
+      url: "www.zillow.com",
+      description: "looking for or dreaming about your next abode? - check this site out!",
+      tags: ["real estate", "reference"]
+    })
+
+    const linkThree = await createLink({
+      name: "Poolside",
+      url: "www.poolside.fm",
+      description: "perfect jams for a tropic night",
+      tags: ["music", "fun"]
+    })
+
     console.log("success creating links!")
 
-    return [linkOne]
+    return [linkOne, linkTwo, linkThree]
   } catch (error) {
     throw error;
   }
