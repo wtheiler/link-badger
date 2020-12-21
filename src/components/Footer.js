@@ -3,7 +3,7 @@ import React from 'react'
 
 import Typography from '@material-ui/core/Typography';
 
-export default function Footer({ Copyright }) {
+export default function Footer({ Copyright, classes }) {
 
     return (
         <footer className={classes.footer}>
